@@ -17,7 +17,7 @@ const MONTHS = ["January","February","March","April","May","June","July","August
 
 // --- State Variables --- //
 let currentBillResult = null;
-let historyData = [];
+let historyData = JSON.parse(localStorage.getItem('powerBillHistory')) || [];
 
 // --- DOM Elements --- //
 const stateSelect = document.getElementById('state');
@@ -56,11 +56,6 @@ const clearHistoryBtn = document.getElementById('clear-history-btn');
 
 // --- Initialization --- //
 function init() {
-    // Fetch initial history from database
-    fetch('/api/bills')
-        .then(res => res.json())
-        .then(data => { historyData = data; })
-        .catch(err => console.error("Error loading history:", err));
 
     // Populate Selects
     Object.keys(STATES).forEach(s => {
@@ -251,26 +246,19 @@ function showToast(msg) {
 }
 
 // --- History Logic --- //
-async function saveCurrentBill() {
+function saveCurrentBill() {
     if(!currentBillResult) return;
     
-    try {
-        const response = await fetch('/api/bills', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(currentBillResult)
-        });
-        
-        if (response.ok) {
-            // Re-fetch to sync with database
-            const getRes = await fetch('/api/bills');
-            historyData = await getRes.json();
-            showToast(`Bill for ${currentBillResult.month} saved to Database!`);
-        }
-    } catch (err) {
-        console.error("Failed to save", err);
-        showToast("Error saving bill to database.");
+    // Check if already saved same month/year
+    const exists = historyData.findIndex(h => h.month === currentBillResult.month && h.year === currentBillResult.year);
+    if(exists !== -1) {
+        historyData[exists] = currentBillResult; // update
+    } else {
+        historyData.push(currentBillResult);
     }
+    
+    localStorage.setItem('powerBillHistory', JSON.stringify(historyData));
+    showToast(`Bill for ${currentBillResult.month} saved successfully!`);
 }
 
 function renderHistory() {
@@ -290,8 +278,8 @@ function renderHistory() {
     let maxAmt = 0;
 
     historyBody.innerHTML = '';
-    // Database returns sorted array (timestamp DESC)
-    const reversed = [...historyData];
+    // Sort array latest first by year conceptually (or just reverse)
+    const reversed = [...historyData].reverse();
     
     reversed.forEach(h => {
         totalAmount += h.total;
@@ -314,16 +302,12 @@ function renderHistory() {
     animateValue(statMax, 0, maxAmt, 800);
 }
 
-async function clearHistory() {
-    if(confirm("Are you sure you want to delete all saved bills from the Database?")) {
-        try {
-            await fetch('/api/bills', { method: 'DELETE' });
-            historyData = [];
-            renderHistory();
-            showToast("Database history cleared!");
-        } catch(err) {
-             console.error("Failed to clear database", err);
-        }
+function clearHistory() {
+    if(confirm("Are you sure you want to delete all saved bills?")) {
+        historyData = [];
+        localStorage.removeItem('powerBillHistory');
+        renderHistory();
+        showToast("History cleared!");
     }
 }
 
