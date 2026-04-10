@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PowerBill - Smart Electricity Calculator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- Ionicons for beautiful icons -->
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</head>
+<body>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar glass-panel">
+            <div class="logo">
+                <ion-icon name="flash"></ion-icon>
+                <h2>PowerBill</h2>
+            </div>
+            
+            <nav class="nav-menu">
+                <button class="nav-item active" id="nav-calculator">
+                    <ion-icon name="calculator-outline"></ion-icon>
+                    <span>Calculator</span>
+                </button>
+                <button class="nav-item" id="nav-history">
+                    <ion-icon name="stats-chart-outline"></ion-icon>
+                    <span>History</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <p>Designed for India</p>
+                <div class="status-indicator">
+                    <span class="dot"></span> Online
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            
+            <!-- Tab: Calculator -->
+            <section id="tab-calculator" class="tab-content active">
+                <header class="top-header">
+                    <div>
+                        <h1 class="page-title">Calculate Your Bill</h1>
+                        <p class="subtitle">Quick and accurate estimates based on state slabs</p>
+                    </div>
+                </header>
+
+                <div class="dashboard-grid">
+                    <!-- Input Section -->
+                    <div class="input-section glass-panel card hover-lift">
+                        <div class="section-title">
+                            <ion-icon name="reader-outline"></ion-icon>
+                            <h3>Bill Details</h3>
+                        </div>
+                        
+                        <form id="calculator-form" class="calc-form">
+                            <div class="form-group">
+                                <label for="state">State / Utility</label>
+                                <div class="select-wrapper">
+                                    <select id="state" required></select>
+                                    <ion-icon name="chevron-down-outline" class="select-icon"></ion-icon>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="units">Units Consumed (kWh)</label>
+                                <div class="input-wrapper">
+                                    <input type="number" id="units" min="0" step="1" placeholder="e.g. 250" required>
+                                    <ion-icon name="flash-outline" class="input-icon"></ion-icon>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group half">
+                                    <label for="month">Month</label>
+                                    <div class="select-wrapper">
+                                        <select id="month" required></select>
+                                        <ion-icon name="chevron-down-outline" class="select-icon"></ion-icon>
+                                    </div>
+                                </div>
+                                <div class="form-group half">
+                                    <label for="year">Year</label>
+                                    <div class="select-wrapper">
+                                        <select id="year" required></select>
+                                        <ion-icon name="chevron-down-outline" class="select-icon"></ion-icon>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Custom Fields (Hidden by default) -->
+                            <div id="custom-fields" class="custom-fields hidden">
+                                <div class="divider"><span>Custom Settings</span></div>
+                                <div class="form-row">
+                                    <div class="form-group half">
+                                        <label for="custom-rate">Rate (Rs/unit)</label>
+                                        <input type="number" id="custom-rate" min="0" step="0.1" placeholder="e.g. 5.5">
+                                    </div>
+                                    <div class="form-group half">
+                                        <label for="custom-fixed">Fixed Charge (Rs)</label>
+                                        <input type="number" id="custom-fixed" min="0" step="1" placeholder="e.g. 40">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn-primary pulse-hover">
+                                <span>Calculate Estimate</span>
+                                <ion-icon name="arrow-forward-outline"></ion-icon>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Results Section -->
+                    <div class="results-section">
+                        <!-- Total Card -->
+                        <div class="total-card glass-panel card result-anim" id="result-summary">
+                            <div class="total-header">
+                                <span class="badge">Estimated Amount</span>
+                                <button class="btn-icon" id="save-btn" title="Save to History">
+                                    <ion-icon name="bookmark-outline"></ion-icon>
+                                </button>
+                            </div>
+                            <div class="total-amount">
+                                <span class="currency">₹</span>
+                                <span id="display-total">0.00</span>
+                            </div>
+                            <p class="bill-meta" id="display-meta">Enter units to see estimate</p>
+                            
+                            <div class="breakdown-pills hidden" id="breakdown-pills">
+                                <div class="pill">
+                                    <span class="dot energy"></span>
+                                    Energy: <span id="pill-energy">₹0</span>
+                                </div>
+                                <div class="pill">
+                                    <span class="dot fixed"></span>
+                                    Fixed: <span id="pill-fixed">₹0</span>
+                                </div>
+                                <div class="pill">
+                                    <span class="dot tax"></span>
+                                    Taxes: <span id="pill-tax">₹0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Slab Table -->
+                        <div class="slab-card glass-panel card table-container hidden" id="slab-container">
+                            <div class="section-title">
+                                <ion-icon name="analytics-outline"></ion-icon>
+                                <h3>Calculation Breakdown</h3>
+                            </div>
+                            <table class="modern-table">
+                                <thead>
+                                    <tr>
+                                        <th>Slab</th>
+                                        <th>Units</th>
+                                        <th>Rate</th>
+                                        <th>Charge</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="slab-body">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Energy Tips -->
+                        <div class="tips-card glass-panel card hidden" id="tips-container">
+                            <div class="tips-header">
+                                <ion-icon name="bulb"></ion-icon>
+                                <h3>Smart Savings Tips</h3>
+                            </div>
+                            <ul class="tips-list" id="tips-list">
+                                <!-- Populated by JS -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tab: History -->
+            <section id="tab-history" class="tab-content">
+                <header class="top-header">
+                    <div>
+                        <h1 class="page-title">Usage History</h1>
+                        <p class="subtitle">Track your past bills and monitor your consumption</p>
+                    </div>
+                    <button id="clear-history-btn" class="btn-secondary">
+                        <ion-icon name="trash-outline"></ion-icon>
+                        Clear All
+                    </button>
+                </header>
+
+                <div class="history-grid">
+                    <div class="stats-row">
+                        <div class="stat-card glass-panel card">
+                            <div class="stat-icon"><ion-icon name="document-text"></ion-icon></div>
+                            <div class="stat-info">
+                                <p>Total Records</p>
+                                <h3 id="stat-records">0</h3>
+                            </div>
+                        </div>
+                        <div class="stat-card glass-panel card">
+                            <div class="stat-icon avg"><ion-icon name="trending-up"></ion-icon></div>
+                            <div class="stat-info">
+                                <p>Average Bill</p>
+                                <h3 id="stat-avg">₹0</h3>
+                            </div>
+                        </div>
+                        <div class="stat-card glass-panel card">
+                            <div class="stat-icon high"><ion-icon name="warning"></ion-icon></div>
+                            <div class="stat-info">
+                                <p>Highest Bill</p>
+                                <h3 id="stat-max">₹0</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="history-table-container glass-panel card">
+                        <div class="section-title">
+                            <ion-icon name="list"></ion-icon>
+                            <h3>Saved Bills</h3>
+                        </div>
+                        <div id="empty-history-msg" class="empty-state">
+                            <ion-icon name="folder-open-outline"></ion-icon>
+                            <p>No bills saved yet.</p>
+                        </div>
+                        <table class="modern-table hidden" id="history-table">
+                            <thead>
+                                <tr>
+                                    <th>Month/Year</th>
+                                    <th>State</th>
+                                    <th>Units</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-body">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <ion-icon name="checkmark-circle"></ion-icon>
+        <span id="toast-message">Bill saved successfully!</span>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
