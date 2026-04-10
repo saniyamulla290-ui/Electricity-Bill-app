@@ -21,7 +21,6 @@
   "homepage": "https://github.com/saniyamulla290-ui/Electricity-Bill-app#readme",
   "dependencies": {
     "cors": "^2.8.6",
-    "express": "^5.2.1",
-    "sqlite3": "^6.0.1"
+    "express": "^5.2.1"
   }
 }
