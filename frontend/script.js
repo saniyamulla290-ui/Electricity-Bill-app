@@ -18,6 +18,7 @@ const MONTHS = ["January","February","March","April","May","June","July","August
 // --- State Variables --- //
 let currentBillResult = null;
 let historyData = [];
+const API_BASE = window.location.protocol === 'file:' ? 'http://localhost:3000/api' : '/api';
 
 // --- DOM Elements --- //
 const stateSelect = document.getElementById('state');
@@ -250,7 +251,7 @@ async function saveCurrentBill() {
     if(!currentBillResult) return;
     
     try {
-        const response = await fetch('http://localhost:3000/api/bills', {
+        const response = await fetch(`${API_BASE}/bills`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -270,7 +271,7 @@ async function saveCurrentBill() {
 
 async function renderHistory() {
     try {
-        const response = await fetch('http://localhost:3000/api/bills');
+        const response = await fetch(`${API_BASE}/bills`);
         const result = await response.json();
         historyData = result.data || [];
     } catch (e) {
@@ -321,7 +322,7 @@ async function renderHistory() {
 async function clearHistory() {
     if(confirm("Are you sure you want to delete all saved bills?")) {
         try {
-            const response = await fetch('http://localhost:3000/api/bills', { method: 'DELETE' });
+            const response = await fetch(`${API_BASE}/bills`, { method: 'DELETE' });
             if (response.ok) {
                 historyData = [];
                 renderHistory();
