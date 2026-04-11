@@ -17,7 +17,7 @@ const MONTHS = ["January","February","March","April","May","June","July","August
 
 // --- State Variables --- //
 let currentBillResult = null;
-let historyData = JSON.parse(localStorage.getItem('powerBillHistory')) || [];
+let historyData = [];
 
 // --- DOM Elements --- //
 const stateSelect = document.getElementById('state');
@@ -246,22 +246,38 @@ function showToast(msg) {
 }
 
 // --- History Logic --- //
-function saveCurrentBill() {
+async function saveCurrentBill() {
     if(!currentBillResult) return;
     
-    // Check if already saved same month/year
-    const exists = historyData.findIndex(h => h.month === currentBillResult.month && h.year === currentBillResult.year);
-    if(exists !== -1) {
-        historyData[exists] = currentBillResult; // update
-    } else {
-        historyData.push(currentBillResult);
+    try {
+        const response = await fetch('http://localhost:3000/api/bills', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(currentBillResult)
+        });
+        if (response.ok) {
+            showToast(`Bill for ${currentBillResult.month} saved successfully!`);
+        } else {
+            const data = await response.json();
+            showToast(`Error saving bill: ${data.error}`);
+        }
+    } catch (e) {
+        showToast(`Network Error: ${e.message}`);
     }
-    
-    localStorage.setItem('powerBillHistory', JSON.stringify(historyData));
-    showToast(`Bill for ${currentBillResult.month} saved successfully!`);
 }
 
-function renderHistory() {
+async function renderHistory() {
+    try {
+        const response = await fetch('http://localhost:3000/api/bills');
+        const result = await response.json();
+        historyData = result.data || [];
+    } catch (e) {
+        console.error("Fetch error:", e);
+        historyData = [];
+    }
+
     if(historyData.length === 0) {
         emptyHistoryMsg.classList.remove('hidden');
         historyTable.classList.add('hidden');
@@ -302,12 +318,20 @@ function renderHistory() {
     animateValue(statMax, 0, maxAmt, 800);
 }
 
-function clearHistory() {
+async function clearHistory() {
     if(confirm("Are you sure you want to delete all saved bills?")) {
-        historyData = [];
-        localStorage.removeItem('powerBillHistory');
-        renderHistory();
-        showToast("History cleared!");
+        try {
+            const response = await fetch('http://localhost:3000/api/bills', { method: 'DELETE' });
+            if (response.ok) {
+                historyData = [];
+                renderHistory();
+                showToast("History cleared!");
+            } else {
+                showToast("Error clearing history.");
+            }
+        } catch (e) {
+            showToast(`Network Error: ${e.message}`);
+        }
     }
 }
 
